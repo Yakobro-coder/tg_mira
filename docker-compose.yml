@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  CRM_search_repeat:
+    build:
+      dockerfile: .
+    volumes:
+      - .:/bot_mira
+    container_name: "bot_mira"
+    env_file:
+      - ./.env
+    depends_on:
+      - startbase_postgres_1
+    restart: always
+    command: start_bot.py
+    networks:
+      - startbase_default
+
+networks:
+  - startbase_default

@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "tg-mira"
+version = "0.1.0"
+description = ""
+authors = ["aleksey yakovlev <aleksey.yakovlev.i@zyfra.com>"]
+readme = "README.md"
+packages = [{include = "tg_mira"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+SQLAlchemy= "^1.4.44"
+requests = "^2.28.1"
+python-dotenv = "^0.21.0"
+pyTelegramBotAPI = "^4.7.1"
+psycopg2-binary = "^2.9.5"
+aiohttp = "^3.8.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
