@@ -132,17 +132,17 @@ async def registration(message):
     """
     #CREATE BUTTON
     markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup_online.add(types.KeyboardButton('Online'))
+    markup_online.add(types.KeyboardButton('🟢Online'))
 
     admin_button_markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    admin_button_markup_online.row(types.KeyboardButton('Online'))
+    admin_button_markup_online.row(types.KeyboardButton('🟢Online'))
     admin_button_markup_online.row(types.KeyboardButton("/Update_leads"))
 
     markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup_offline.add(types.KeyboardButton('Offline'))
+    markup_offline.add(types.KeyboardButton('🔴Offline'))
 
     admin_button_markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    admin_button_markup_offline.row(types.KeyboardButton('Offline'))
+    admin_button_markup_offline.row(types.KeyboardButton('🔴Offline'))
     admin_button_markup_offline.row(types.KeyboardButton("/Update_leads"))
 
 
@@ -180,20 +180,32 @@ async def registration(message):
 
                 await bot.send_message(message.chat.id,
                                        "✅Аккаунт авторизован!✅\n"
-                                       "Сейчас вы находитесь в статусе ⭕'OFFLINE'.\n"
+                                       "Сейчас вы находитесь в статусе 🔴'OFFLINE'.\n"
                                        "Для получения новых лидов, нажмите <b>'Online'</b>.",
                                        parse_mode="HTML",
                                        reply_markup=button_online)
             elif data_base.get(str(message.from_user.id)) is not None:
-                await bot.send_message(message.chat.id, f'Пользователь {message.text} уже Авторизован!')
+                crm_user_id = data_base.get(str(message.from_user.id))
+                registered_mail = [mail for mail, id in users.items() if id == crm_user_id][0]
+                await bot.send_message(message.chat.id,
+                                       f'<b>Вы уже Авторизованы под логином {registered_mail}!</b>',
+                                       parse_mode="HTML")
         else:
-            await bot.send_message(message.chat.id,
-                                   f'Пользователь {message.text} не существует в AMOcrm!🤔\n'
-                                   f'Необходимо пройти Авторизацию!\nПожалуйста, укажите <b>ваш логин AMOcrm.</b>',
-                                   parse_mode="HTML")
+            if data_base.get(str(message.from_user.id)) is None:
+                await bot.send_message(message.chat.id,
+                                       f'Пользователь {message.text} не существует в AMOcrm!🤔\n'
+                                       f'Необходимо пройти Авторизацию!\nПожалуйста, укажите <b>ваш логин AMOcrm.</b>',
+                                       parse_mode="HTML")
+            if data_base.get(str(message.from_user.id)) is not None:
+                crm_user_id = data_base.get(str(message.from_user.id))
+                registered_mail = [mail for mail, id in users.items() if id == crm_user_id][0]
+                await bot.send_message(message.chat.id,
+                                       f'Пользователь {message.text} не существует в AMOcrm!🤔\n'
+                                       f'<b>И вы уже Авторизованы под логином {registered_mail}!</b>',
+                                       parse_mode="HTML")
 
     # Change status in crm system for registered users in bot.
-    elif message.text == 'Online' and data_base.get(str(message.from_user.id)) is not None:
+    elif message.text == '🟢Online' and data_base.get(str(message.from_user.id)) is not None:
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 1}
         requests.post(
@@ -204,7 +216,7 @@ async def registration(message):
                                parse_mode="HTML",
                                reply_markup=button_offline)
 
-    elif message.text == 'Offline' and data_base.get(str(message.from_user.id)) is not None:
+    elif message.text == '🔴Offline' and data_base.get(str(message.from_user.id)) is not None:
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 0}
         requests.post(

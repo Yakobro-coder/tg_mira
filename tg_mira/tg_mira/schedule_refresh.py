@@ -27,7 +27,7 @@ while True:
         token = select_db.get_token()
         headers = {"Authorization": token}
         params = {
-            "filter[responsible_user_id]": 8538668,  # admin8:8538668    admin:7539577
+            "filter[responsible_user_id]": dotenv_values('.env').get('CRM_ID_ADMIN'),  # admin8:8538668    admin:7539577
             "filter[statuses][0][pipeline_id]": 3414178,  # REGISTERED LEADS
             "filter[statuses][0][status_id]": 34017646,  # NEW LEAD
             "limit": 250,
