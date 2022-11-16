@@ -2,21 +2,26 @@ import requests
 import json
 import logging
 from datetime import datetime, timedelta
+import pytz
 import time
+from dotenv import dotenv_values
 
 from db_foo import select_db
 
+tmz = pytz.timezone(dotenv_values('.env').get('TIMEZONE'))
+
 logging.basicConfig(filename='logs/schedule_log',
-                    format=f"[%(asctime)s] %(levelname)s: \"%(message)s\"",
+                    format=f"[{datetime.now(tmz)}] %(levelname)s: \"%(message)s\"",
                     level=logging.INFO)
 
-time_refresh = timedelta(hours=5, minutes=0, seconds=0)
+time_refresh = timedelta(hours=8, minutes=0, seconds=0)
 time_stop = time_refresh + timedelta(minutes=1)
 
 print("### START SCHEDULE!!! ###")
 logging.info("### START SCHEDULE!!! ###")
 while True:
-    now_time = timedelta(hours=datetime.now().hour, minutes=datetime.now().minute, seconds=datetime.now().second)
+    dt = datetime.now(tmz)
+    now_time = timedelta(hours=dt.hour, minutes=dt.minute, seconds=dt.second)
 
     if time_refresh < now_time < time_stop:
         token = select_db.get_token()

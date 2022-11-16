@@ -3,6 +3,7 @@ from telebot import types
 import asyncio
 
 from datetime import datetime
+import pytz
 import requests
 import json
 import logging
@@ -12,9 +13,10 @@ from filters import admin_filter
 
 from dotenv import dotenv_values
 
+tmz = pytz.timezone(dotenv_values('.env').get('TIMEZONE'))
 
 logging.basicConfig(filename='logs/bot_log',
-                    format=f"[%(asctime)s] %(levelname)s: \"%(message)s\"",
+                    format=f"[{datetime.now(tmz)}] %(levelname)s: \"%(message)s\"",
                     level=logging.INFO)
 
 bot = AsyncTeleBot(dotenv_values('.env').get('TOKEN'))
