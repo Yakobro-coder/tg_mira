@@ -205,7 +205,7 @@ async def registration(message):
                                        parse_mode="HTML")
 
     # Change status in crm system for registered users in bot.
-    elif message.text == '🟢Online' and data_base.get(str(message.from_user.id)) is not None:
+    elif (message.text == '🟢Online' or message.text == 'Online') and data_base.get(str(message.from_user.id)) is not None:
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 1}
         requests.post(
@@ -216,7 +216,7 @@ async def registration(message):
                                parse_mode="HTML",
                                reply_markup=button_offline)
 
-    elif message.text == '🔴Offline' and data_base.get(str(message.from_user.id)) is not None:
+    elif (message.text == '🔴Offline' or message.text == 'Offline') and data_base.get(str(message.from_user.id)) is not None:
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 0}
         requests.post(
