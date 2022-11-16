@@ -15,9 +15,7 @@ from dotenv import dotenv_values
 
 tmz = pytz.timezone(dotenv_values('.env').get('TIMEZONE'))
 
-logging.basicConfig(filename='logs/bot_log',
-                    format=f"[{datetime.now(tmz)}] %(levelname)s: \"%(message)s\"",
-                    level=logging.INFO)
+logging.basicConfig(filename='logs/bot_log', format=f"%(levelname)s: %(message)s", level=logging.INFO)
 
 bot = AsyncTeleBot(dotenv_values('.env').get('TOKEN'))
 
@@ -25,7 +23,7 @@ start_text = "Для авторизации, пожалуйста, укажит�
 
 
 def write_in_log(message):
-    logging.info(f"{message.from_user.id} - {message.from_user.first_name} {message.from_user.last_name} \"{message.text}\"")
+    logging.info(f"[{datetime.now(tmz)}] {message.from_user.id} - {message.from_user.first_name} {message.from_user.last_name} \"{message.text}\"")
 
 
 @bot.message_handler(commands=['start'])
