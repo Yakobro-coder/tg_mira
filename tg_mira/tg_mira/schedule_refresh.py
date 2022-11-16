@@ -6,6 +6,7 @@ import pytz
 import time
 from dotenv import dotenv_values
 
+from models.users_model import Admin
 from db_foo import select_db
 
 tmz = pytz.timezone(dotenv_values('.env').get('TIMEZONE'))
@@ -17,7 +18,6 @@ logging.basicConfig(filename='logs/schedule_log',
 time_refresh = timedelta(hours=8, minutes=0, seconds=0)
 time_stop = time_refresh + timedelta(minutes=1)
 
-print("### START SCHEDULE!!! ###")
 logging.info("### START SCHEDULE!!! ###")
 while True:
     dt = datetime.now(tmz)
@@ -67,6 +67,23 @@ while True:
         if send_leads_in_new_lead.status_code != 200:
             logging.info(("Request:", send_leads_in_new_lead.text,
                           "Status_code:", send_leads_in_new_lead.status_code), )
+        elif send_leads_in_new_lead.status_code == 200:
+            word = ""
+            if len(leads_id) == 1:
+                word = "лид"
+            elif 1 < len(leads_id) < 5:
+                word = "лидa"
+            elif 4 < len(leads_id) or len(leads_id) == 0:
+                word = "лидов"
+
+            for chat_id in Admin.ADMIN.value:
+                data = {
+                    "chat_id": chat_id,
+                    "text": f"<b>Автоматическое распределение выполнено!♻\nРаспределено: {len(leads_id)} {word}!</b>",
+                    "parse_mode": "html"
+                }
+                res = requests.post(f"https://api.telegram.org/bot{dotenv_values('.env').get('TOKEN')}/sendMessage",
+                                    data=data)
 
         time.sleep(600)
     time.sleep(1)
