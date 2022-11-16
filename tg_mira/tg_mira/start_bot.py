@@ -55,14 +55,14 @@ async def update_lids(message):
         leads_id = []
         for i in range(5):
             params["page"] = 1 + i
-            response = requests.get("https://mirarealestate.amocrm.com/api/v4/leads",
+            response_leads = requests.get("https://mirarealestate.amocrm.com/api/v4/leads",
                                     params=params,
                                     headers=headers)
 
-            logging.info(("Params in request:", params, "Status_code:", response.status_code), )
+            logging.info(("Params in request:", params, "Status_code:", response_leads.status_code), )
 
-            if response.status_code == 200:
-                for lead in response.json().get("_embedded").get("leads"):
+            if response_leads.status_code == 200:
+                for lead in response_leads.json().get("_embedded").get("leads"):
                     leads_id.append({"id": lead.get("id"), "status_id": 52806419})
             else:
                 break
@@ -75,13 +75,9 @@ async def update_lids(message):
         if send_leads_in_progress.status_code != 200:
             logging.info(("Request:", send_leads_in_progress.text,
                           "Status_code:", send_leads_in_progress.status_code), )
-            await bot.send_message(message.chat.id,
-                                   "<b>Что то пошло не так. Обратитесь к админу!</b>",
-                                   parse_mode="HTML")
 
         # SEND LEADS FOR CRM SYSTEM IN STATUS "NEW LEAD"
         [lead.update(status_id=34017646) for lead in leads_id]
-
         send_leads_in_new_lead = requests.patch("https://mirarealestate.amocrm.com/api/v4/leads",
                                                 headers=headers,
                                                 data=json.dumps(leads_id))
@@ -89,9 +85,15 @@ async def update_lids(message):
         if send_leads_in_new_lead.status_code != 200:
             logging.info(("Request:", send_leads_in_new_lead.text,
                           "Status_code:", send_leads_in_new_lead.status_code), )
-            await bot.send_message(message.chat.id,
-                                   "<b>Что то пошло не так. Обратитесь к админу!!!</b>",
-                                   parse_mode="HTML")
+            if response_leads.status_code == 204 and send_leads_in_progress.status_code == 400 and send_leads_in_new_lead.status_code == 400:
+                await bot.send_message(message.chat.id,
+                                       "<b>Автоматическое распределение выполнено!♻\n"
+                                       "Лидов для распределения не найдено!</b>",
+                                       parse_mode="HTML")
+            else:
+                await bot.send_message(message.chat.id,
+                                       "<b>Что то пошло не так. Обратитесь к админу!!!</b>",
+                                       parse_mode="HTML")
         else:
             word = ""
             if len(leads_id) == 1:

@@ -67,6 +67,17 @@ while True:
         if send_leads_in_new_lead.status_code != 200:
             logging.info(("Request:", send_leads_in_new_lead.text,
                           "Status_code:", send_leads_in_new_lead.status_code), )
+            if response.status_code == 204 and send_leads_in_progress.status_code == 400 and send_leads_in_new_lead.status_code == 400:
+                for chat_id in Admin.ADMIN.value:
+                    data = {
+                        "chat_id": chat_id,
+                        "text": f"<b>Автоматическое распределение выполнено!♻\n"
+                                f"Лидов для распределения не найдено!</b>",
+                        "parse_mode": "HTML"
+                    }
+                    res = requests.post(f"https://api.telegram.org/bot{dotenv_values('.env').get('TOKEN')}/sendMessage",
+                                        data=data)
+
         elif send_leads_in_new_lead.status_code == 200:
             word = ""
             if len(leads_id) == 1:
@@ -80,7 +91,7 @@ while True:
                 data = {
                     "chat_id": chat_id,
                     "text": f"<b>Автоматическое распределение выполнено!♻\nРаспределено: {len(leads_id)} {word}!</b>",
-                    "parse_mode": "html"
+                    "parse_mode": "HTML"
                 }
                 res = requests.post(f"https://api.telegram.org/bot{dotenv_values('.env').get('TOKEN')}/sendMessage",
                                     data=data)
