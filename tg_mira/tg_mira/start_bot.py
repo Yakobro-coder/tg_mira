@@ -21,20 +21,6 @@ bot = AsyncTeleBot(dotenv_values('.env').get('TOKEN'))
 
 start_text = "Для авторизации, пожалуйста, укажите <b>ваш логин AMOcrm.</b>"
 
-markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
-admin_button_markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
-markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
-admin_button_markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
-
-markup_online.add(types.KeyboardButton('Online'))
-markup_offline.add(types.KeyboardButton('Offline'))
-
-admin_button_markup_online.row(types.KeyboardButton('Online'))
-admin_button_markup_online.row(types.KeyboardButton("/Update_leads"))
-
-admin_button_markup_offline.row(types.KeyboardButton('Offline'))
-admin_button_markup_offline.row(types.KeyboardButton("/Update_leads"))
-
 
 def write_in_log(message):
     logging.info(f"{message.from_user.id} - {message.from_user.first_name} {message.from_user.last_name} \"{message.text}\"")
@@ -59,7 +45,7 @@ async def update_lids(message):
         token = select_db.get_token()
         headers = {"Authorization": token}
         params = {
-            "filter[responsible_user_id]": 8538668,           # Admin8
+            "filter[responsible_user_id]": 8538668,           # admin8:8538668    admin:7539577
             "filter[statuses][0][pipeline_id]": 3414178,      #
             "filter[statuses][0][status_id]": 34017646,       # NEW LEAD
             "limit": 250,
@@ -84,7 +70,7 @@ async def update_lids(message):
         # SEND LEADS FOR CRM SYSTEM IN STATUS "IN PROGRESS"
         send_leads_in_progress = requests.patch("https://mirarealestate.amocrm.com/api/v4/leads",
                                                 headers=headers,
-                                                data=leads_id)
+                                                data=json.dumps(leads_id))
 
         if send_leads_in_progress.status_code != 200:
             logging.info(("Request:", send_leads_in_progress.text,
@@ -94,20 +80,31 @@ async def update_lids(message):
                                    parse_mode="HTML")
 
         # SEND LEADS FOR CRM SYSTEM IN STATUS "NEW LEAD"
+        [lead.update(status_id=34017646) for lead in leads_id]
+
         send_leads_in_new_lead = requests.patch("https://mirarealestate.amocrm.com/api/v4/leads",
                                                 headers=headers,
-                                                data=leads_id)
+                                                data=json.dumps(leads_id))
 
         if send_leads_in_new_lead.status_code != 200:
             logging.info(("Request:", send_leads_in_new_lead.text,
                           "Status_code:", send_leads_in_new_lead.status_code), )
             await bot.send_message(message.chat.id,
-                                   "<b>Что то пошло не так. Обратитесь к админу!</b>",
+                                   "<b>Что то пошло не так. Обратитесь к админу!!!</b>",
                                    parse_mode="HTML")
         else:
+            word = ""
+            if len(leads_id) == 1:
+                word = "лид"
+            elif 1 < len(leads_id) < 5:
+                word = "лидa"
+            elif 4 < len(leads_id) or len(leads_id) == 0:
+                word = "лидов"
+
             await bot.send_message(message.chat.id,
-                                   f"<b>Готово! Было распределено {len(leads_id)} лидов!</b>",
+                                   f"<b>Готово! Распределено: {len(leads_id)} {word}!</b>",
                                    parse_mode="HTML")
+
 
 # @bot.message_handler(commands=['refreshdatabaseusers'])
 # async def refresh_db_user(message):
@@ -131,12 +128,33 @@ async def registration(message):
     """
     Registration users and write user_id in database.
     """
+    #CREATE BUTTON
+    markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup_online.add(types.KeyboardButton('Online'))
+
+    admin_button_markup_online = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    admin_button_markup_online.row(types.KeyboardButton('Online'))
+    admin_button_markup_online.row(types.KeyboardButton("/Update_leads"))
+
+    markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup_offline.add(types.KeyboardButton('Offline'))
+
+    admin_button_markup_offline = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    admin_button_markup_offline.row(types.KeyboardButton('Offline'))
+    admin_button_markup_offline.row(types.KeyboardButton("/Update_leads"))
+
+
     write_in_log(message)
     data_base = select_db.all_users()
 
+    url_widget = 'https://widgets.comf5.ru/crm/28844278/'
+
     if admin_filter.check(message):
-        markup_online = admin_button_markup_online
-        markup_offline = admin_button_markup_offline
+        button_online = admin_button_markup_online
+        button_offline = admin_button_markup_offline
+    else:
+        button_online = markup_online
+        button_offline = markup_offline
 
     # search @ (mail) in text, and reg.users
     if '@' in tuple(message.text):
@@ -152,10 +170,18 @@ async def registration(message):
             if data_base.get(str(message.from_user.id)) is None:
                 data_base[message.from_user.id] = users.get(message.text)
                 write_db.update_users(json.dumps(data_base))
+
+                data = {"status": 0}
+                requests.post(
+                    f"{url_widget}{users.get(message.text)}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
+                    data=data)
+
                 await bot.send_message(message.chat.id,
-                                       "✅Аккаунт авторизован!✅\nДля получения новых лидов, нажмите <b>'Online'</b>.",
+                                       "✅Аккаунт авторизован!✅\n"
+                                       "Сейчас вы находитесь в статусе ⭕'OFFLINE'.\n"
+                                       "Для получения новых лидов, нажмите <b>'Online'</b>.",
                                        parse_mode="HTML",
-                                       reply_markup=markup_online)
+                                       reply_markup=button_online)
             elif data_base.get(str(message.from_user.id)) is not None:
                 await bot.send_message(message.chat.id, f'Пользователь {message.text} уже Авторизован!')
         else:
@@ -169,23 +195,23 @@ async def registration(message):
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 1}
         requests.post(
-            f"https://widgets.comf5.ru/crm/28844278/{crm_user_id}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
+            f"{url_widget}{crm_user_id}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
             data=data)
         await bot.send_message(message.chat.id,
                                "🔥Поздравляю, вы <b>'Online'</b>!🔥\nТеперь вы можете получать новые лиды.",
                                parse_mode="HTML",
-                               reply_markup=markup_offline)
+                               reply_markup=button_offline)
 
     elif message.text == 'Offline' and data_base.get(str(message.from_user.id)) is not None:
         crm_user_id = data_base.get(str(message.from_user.id))
         data = {"status": 0}
         requests.post(
-            f"https://widgets.comf5.ru/crm/28844278/{crm_user_id}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
+            f"{url_widget}{crm_user_id}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
             data=data)
         await bot.send_message(message.chat.id,
                                "⛔️Внимание вы <b>'Offline'</b>!⛔️\nТеперь вы не можете получать новые лиды!",
                                parse_mode="HTML",
-                               reply_markup=markup_online)
+                               reply_markup=button_online)
 
     # Processing left messages not according to the script
     elif '@' not in tuple(message.text):

@@ -41,3 +41,4 @@ FROM python-base as production
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 COPY ./tg_mira/tg_mira ./
 CMD ["python", "start_bot.py"]
+CMD ["python", "schedule_refresh.py"]
