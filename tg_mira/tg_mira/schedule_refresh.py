@@ -10,10 +10,7 @@ from models.users_model import Admin
 from db_foo import select_db
 
 tmz = pytz.timezone(dotenv_values('.env').get('TIMEZONE'))
-
-logging.basicConfig(filename='logs/schedule_log',
-                    format=f"[{datetime.now(tmz)}] %(levelname)s: \"%(message)s\"",
-                    level=logging.INFO)
+logging.basicConfig(filename='logs/schedule_log', format=f"%(levelname)s: %(message)s", level=logging.INFO)
 
 time_refresh = timedelta(hours=8, minutes=0, seconds=0)
 time_stop = time_refresh + timedelta(minutes=1)
@@ -41,7 +38,7 @@ while True:
                                     params=params,
                                     headers=headers)
 
-            logging.info(("Params in request:", params, "Status_code:", response.status_code), )
+            logging.info(f'[{datetime.now(tmz)}] Params in request: {params} || Status_code: {response.status_code}')
 
             if response.status_code == 200:
                 for lead in response.json().get("_embedded").get("leads"):
@@ -55,8 +52,7 @@ while True:
                                                 data=json.dumps(leads_id))
 
         if send_leads_in_progress.status_code != 200:
-            logging.info(("Request:", send_leads_in_progress.text,
-                          "Status_code:", send_leads_in_progress.status_code), )
+            logging.info(f'[{datetime.now(tmz)}] Request: {send_leads_in_progress.text} || Status_code: {send_leads_in_progress.status_code}')
 
         # SEND LEADS FOR CRM SYSTEM IN STATUS "NEW LEAD"
         [lead.update(status_id=34017646) for lead in leads_id]
@@ -65,8 +61,7 @@ while True:
                                                 data=json.dumps(leads_id))
 
         if send_leads_in_new_lead.status_code != 200:
-            logging.info(("Request:", send_leads_in_new_lead.text,
-                          "Status_code:", send_leads_in_new_lead.status_code), )
+            logging.info(f'[{datetime.now(tmz)}] Request: {send_leads_in_new_lead.text} || Status_code: {send_leads_in_new_lead.status_code}')
             if response.status_code == 204 and send_leads_in_progress.status_code == 400 and send_leads_in_new_lead.status_code == 400:
                 for chat_id in Admin.ADMIN.value:
                     data = {
