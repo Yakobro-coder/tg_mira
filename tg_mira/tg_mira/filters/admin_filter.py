@@ -1,4 +1,4 @@
-from tg_mira.models.users_model import Admin
+from tg_mira.tg_mira.models import *
 
 
 def check(message):

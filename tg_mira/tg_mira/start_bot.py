@@ -1,5 +1,6 @@
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
+from models import *
 import asyncio
 
 from datetime import datetime
@@ -8,7 +9,7 @@ import requests
 import json
 import logging
 
-from db_foo import select_db, write_db
+from tg_mira.tg_mira.db_foo import select_db, write_db
 from filters import admin_filter
 
 from dotenv import dotenv_values
@@ -46,7 +47,7 @@ async def update_lids(message):
         headers = {"Authorization": token}
         params = {
             "filter[responsible_user_id]": 8538668,           # admin8:8538668    admin:7539577
-            "filter[statuses][0][pipeline_id]": 3414178,      #
+            "filter[statuses][0][pipeline_id]": 3414178,      # Registered Leads
             "filter[statuses][0][status_id]": 34017646,       # NEW LEAD
             "limit": 250,
             "page": 1
@@ -56,8 +57,8 @@ async def update_lids(message):
         for i in range(5):
             params["page"] = 1 + i
             response_leads = requests.get("https://mirarealestate.amocrm.com/api/v4/leads",
-                                    params=params,
-                                    headers=headers)
+                                          params=params,
+                                          headers=headers)
 
             logging.info(("Params in request:", params, "Status_code:", response_leads.status_code), )
 
@@ -145,7 +146,6 @@ async def registration(message):
     admin_button_markup_offline.row(types.KeyboardButton('🔴Offline'))
     admin_button_markup_offline.row(types.KeyboardButton("/Update_leads"))
 
-
     write_in_log(message)
     data_base = select_db.all_users()
 
@@ -177,6 +177,11 @@ async def registration(message):
                 requests.post(
                     f"{url_widget}{users.get(message.text)}/Respool/6032/setStatus?token={dotenv_values('.env').get('WIDGET_TOKEN')}",
                     data=data)
+
+                write_db.add_data(
+                    Users(telegram_id=message.from_user.id, crm_id=users.get(message.text), username=message.from_user.username,
+                          first_name=message.from_user.first_name, last_name=message.from_user.last_name, email=message.text)
+                )
 
                 await bot.send_message(message.chat.id,
                                        "✅Аккаунт авторизован!✅\n"
