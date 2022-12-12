@@ -1,4 +1,4 @@
-from tg_mira.tg_mira.models import *
+from models import *
 
 
 def check(message):

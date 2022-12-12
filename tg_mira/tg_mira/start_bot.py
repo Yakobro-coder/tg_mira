@@ -9,7 +9,7 @@ import requests
 import json
 import logging
 
-from tg_mira.tg_mira.db_foo import select_db, write_db
+from db_foo import select_db, write_db
 from filters import admin_filter
 
 from dotenv import dotenv_values

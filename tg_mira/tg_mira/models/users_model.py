@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, Table
 from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
-from tg_mira.tg_mira.db_foo.db_connect import get_metadata
+from db_foo.db_connect import get_metadata
 metadata = get_metadata()
 
 from enum import Enum
